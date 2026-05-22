@@ -98,7 +98,7 @@ Why this matters:
 
 ## Operational Guidelines
 
-- **Volume:** ~300 jobs/run (2 search terms × 150 results each) — well within undetectable range
+- **Volume:** N search terms × 150 results each — well within undetectable range
 - **Request pacing:** Space requests naturally; avoid burst patterns
   - Use random jitter between requests (2.5–8 seconds) to mimic human behavior
   - Never use fixed intervals
@@ -107,8 +107,8 @@ Why this matters:
   ```python
   scrape_jobs(
       site_name=["linkedin"],
-      search_term="machine learning engineer",
-      location="San Francisco, CA",
+      search_term="<your search term>",
+      location="<your location>",
       results_wanted=25,
       proxies=["user:pass@proxy.webshare.io:port"]
   )

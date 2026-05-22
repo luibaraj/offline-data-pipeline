@@ -7,7 +7,7 @@
 - 2,000 free minutes/month; 12 runs/day × ~1 min = ~360 min/month — well within limits
 - Runs on GitHub's infrastructure — Mac does not need to be on or awake
 - All scraping traffic still routes through Webshare residential proxies; LinkedIn sees residential IPs, not GitHub datacenter IPs
-- Schedule: every 2 hours, 2 terms × 150 results/term = 300 jobs/run
+- Schedule: every 2 hours, N terms × 150 results/term = N×150 jobs/run
 
 **Rejected alternatives:**
 
@@ -59,7 +59,7 @@
 ## Operational Guidelines (updated)
 
 - Run 12×/day, every 2 hours; apply a random startup delay (e.g. 0–20 minutes) at the start of each run to jitter the fixed 2-hour interval
-- 2 search terms × 150 results/term = 300 jobs/run; page size is 25 results/batch
+- N search terms × 150 results/term = N×150 jobs/run; page size is 25 results/batch
 - `hours_old=24` is set in the scraper — enforces data freshness at the query level
 - Never commit `WEBSHARE_PROXY_URL` or any credentials — store in GitHub Actions secrets
 - Monitor for `saved=0` across consecutive runs as a signal that JobSpy's endpoints have broken

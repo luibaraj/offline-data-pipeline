@@ -1,10 +1,22 @@
 import time
 import random
 import logging
+import requests
 from jobspy import scrape_jobs
 import config
 
 logger = logging.getLogger(__name__)
+
+
+def _check_proxy(proxy_url: str, attempts: int = 3) -> None:
+    proxies = {"http": proxy_url, "https": proxy_url}
+    for attempt in range(1, attempts + 1):
+        try:
+            requests.head("https://www.linkedin.com", proxies=proxies, timeout=5)
+            return
+        except Exception as e:
+            logger.warning("Proxy check failed (attempt %d/%d): %s", attempt, attempts, e)
+    raise RuntimeError("Proxy unreachable after 3 attempts — check Webshare credentials or endpoint")
 
 
 def _scrape_batch(search_term: str, location: str, offset: int) -> list[dict]:
@@ -26,6 +38,9 @@ def _scrape_batch(search_term: str, location: str, offset: int) -> list[dict]:
 
 
 def scrape_paginated(search_term: str, location: str, total: int) -> list[dict]:
+    if config.PROXY_URL:
+        _check_proxy(config.PROXY_URL)
+
     all_jobs = []
     offset = 0
     logger.info("Scraping: '%s' in '%s' (%d total)", search_term, location, total)

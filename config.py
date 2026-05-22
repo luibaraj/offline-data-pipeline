@@ -23,6 +23,6 @@ RESULTS_PER_SEARCH = 25
 RESULTS_PER_TERM = 150
 
 SEARCH_TERMS = [
-    "Entry Level Machine Learning Engineer",
-    "Entry Level Data Scientist, Machine Learning, Deep Learning, AI",
+    "Machine Learning Engineer",
+    "Data Scientist",
 ]
