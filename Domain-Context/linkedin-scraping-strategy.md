@@ -98,7 +98,7 @@ Why this matters:
 
 ## Operational Guidelines
 
-- **Volume:** ~300 jobs/day — well within undetectable range
+- **Volume:** ~300 jobs/run (2 search terms × 150 results each) — well within undetectable range
 - **Request pacing:** Space requests naturally; avoid burst patterns
   - Use random jitter between requests (2.5–8 seconds) to mimic human behavior
   - Never use fixed intervals

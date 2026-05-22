@@ -11,9 +11,11 @@ logger = logging.getLogger(__name__)
 
 def cmd_scrape(args):
     db.init()
-    jobs = scraper.scrape_paginated(args.term, args.location, args.results)
-    saved = db.save_jobs(jobs)
-    logger.info("Done: %d new jobs saved (of %d scraped)", saved, len(jobs))
+    all_jobs = []
+    for term in config.SEARCH_TERMS:
+        all_jobs.extend(scraper.scrape_paginated(term, args.location, config.RESULTS_PER_TERM))
+    saved = db.save_jobs(all_jobs)
+    logger.info("Done: %d new jobs saved (of %d scraped)", saved, len(all_jobs))
 
 
 def cmd_search(args):
@@ -27,9 +29,7 @@ def main():
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_scrape = sub.add_parser("scrape", help="Scrape jobs and store them")
-    p_scrape.add_argument("term", help="Search term, e.g. 'machine learning engineer'")
-    p_scrape.add_argument("location", help="Location, e.g. 'San Francisco, CA'")
-    p_scrape.add_argument("--results", type=int, default=config.RESULTS_PER_SEARCH, help="Results per search term")
+    p_scrape.add_argument("--location", default="United States", help="Location, e.g. 'San Francisco, CA'")
     p_scrape.set_defaults(func=cmd_scrape)
 
     p_search = sub.add_parser("search", help="Search stored jobs")

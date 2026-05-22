@@ -20,3 +20,9 @@ DB_PATH = os.environ.get("DB_PATH", "jobs.db")
 JITTER_MIN = 2.5
 JITTER_MAX = 8.0
 RESULTS_PER_SEARCH = 25
+RESULTS_PER_TERM = 150
+
+SEARCH_TERMS = [
+    "Entry Level Machine Learning Engineer",
+    "Entry Level Data Scientist, Machine Learning, Deep Learning, AI",
+]

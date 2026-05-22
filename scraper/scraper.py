@@ -19,6 +19,7 @@ def _scrape_batch(search_term: str, location: str, offset: int) -> list[dict]:
         offset=offset,
         hours_old=24,
         proxies=proxies,
+        linkedin_fetch_description=True,
         headers={"User-Agent": user_agent},
     )
     return df.to_dict("records")
