@@ -19,7 +19,7 @@ def cmd_scrape(args):
 
 
 def cmd_search(args):
-    rows = db.search_jobs(keyword=args.keyword, limit=args.limit)
+    rows = db.search_jobs(keyword=args.keyword, limit=args.limit, hours=args.since)
     for row in rows:
         print(f"{row['date_posted']}  {row['company']:<30}  {row['title']:<50}  {row['job_url']}")
 
@@ -35,6 +35,7 @@ def main():
     p_search = sub.add_parser("search", help="Search stored jobs")
     p_search.add_argument("keyword", nargs="?", default="", help="Keyword to filter by title/description")
     p_search.add_argument("--limit", type=int, default=50)
+    p_search.add_argument("--since", type=int, default=None, metavar="HOURS", help="Only jobs scraped within the last N hours")
     p_search.set_defaults(func=cmd_search)
 
     args = parser.parse_args()

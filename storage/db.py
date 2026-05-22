@@ -59,14 +59,19 @@ def save_jobs(jobs: list[dict]) -> int:
     return inserted
 
 
-def search_jobs(keyword: str = "", limit: int = 50) -> list[sqlite3.Row]:
+def search_jobs(keyword: str = "", limit: int = 50, hours: int | None = None) -> list[sqlite3.Row]:
     with _conn() as con:
+        conditions = []
+        params: list = []
         if keyword:
+            conditions.append("(title LIKE ? OR description LIKE ?)")
             pattern = f"%{keyword}%"
-            return con.execute(
-                "SELECT * FROM jobs WHERE title LIKE ? OR description LIKE ? ORDER BY scraped_at DESC LIMIT ?",
-                (pattern, pattern, limit),
-            ).fetchall()
+            params.extend([pattern, pattern])
+        if hours is not None:
+            conditions.append("scraped_at >= datetime('now', ? || ' hours')")
+            params.append(f"-{hours}")
+        where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+        params.append(limit)
         return con.execute(
-            "SELECT * FROM jobs ORDER BY scraped_at DESC LIMIT ?", (limit,)
+            f"SELECT * FROM jobs {where} ORDER BY scraped_at DESC LIMIT ?", params
         ).fetchall()

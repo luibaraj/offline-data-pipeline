@@ -29,7 +29,7 @@ def _scrape_batch(search_term: str, location: str, offset: int) -> list[dict]:
         location=location,
         results_wanted=config.RESULTS_PER_SEARCH,
         offset=offset,
-        hours_old=24,
+        hours_old=6,
         proxies=proxies,
         linkedin_fetch_description=True,
         headers={"User-Agent": user_agent},

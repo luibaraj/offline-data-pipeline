@@ -98,9 +98,10 @@ Why this matters:
 
 ## Operational Guidelines
 
-- **Volume:** N search terms × 150 results each — well within undetectable range
+- **Volume:** ~300 jobs/day (4 runs × ~75 jobs/run, 2 terms × 38 results/term) — well within undetectable range
 - **Request pacing:** Space requests naturally; avoid burst patterns
   - Use random jitter between requests (2.5–8 seconds) to mimic human behavior
+  - Apply 0–20 min random startup delay per run to break fixed 6-hour interval pattern
   - Never use fixed intervals
 - **User-Agent rotation:** Randomize the `User-Agent` header per request (5–10 variations minimum)
 - **Proxies:** Use Webshare rotating residential proxies to isolate your home IP from LinkedIn's detection systems
