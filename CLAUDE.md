@@ -12,6 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Delete code that isn't doing meaningful work; dead code is a liability
 - Prefer a clear 10-line function over an abstracted 50-line one
 - No speculative abstractions: don't build for hypothetical future requirements
+- Create/Edit the least number of files necessary for each task
 
 ### Logging
 

@@ -1,0 +1,6 @@
+.env
+jobs.db
+__pycache__/
+*.pyc
+export.py
+jobs_export.csv
