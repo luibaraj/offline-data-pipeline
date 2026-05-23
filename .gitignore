@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 export.py
 jobs_export.csv
+Domain-Context/data-pipeline-checklist.md

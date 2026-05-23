@@ -4,6 +4,7 @@ import logging
 import config
 import scraper.scraper as scraper
 import storage.db as db
+from storage.preprocess import clean_description
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -16,6 +17,20 @@ def cmd_scrape(args):
         all_jobs.extend(scraper.scrape_paginated(term, args.location, config.RESULTS_PER_TERM))
     saved = db.save_jobs(all_jobs)
     logger.info("Done: %d new jobs saved (of %d scraped)", saved, len(all_jobs))
+
+
+def cmd_preprocess(args):
+    db.init()
+    with db._conn() as con:
+        rows = con.execute(
+            "SELECT id, description FROM jobs WHERE description_clean IS NULL AND description IS NOT NULL"
+        ).fetchall()
+        for row in rows:
+            con.execute(
+                "UPDATE jobs SET description_clean = ? WHERE id = ?",
+                (clean_description(row["description"]), row["id"]),
+            )
+    logger.info("Preprocessed %d job descriptions", len(rows))
 
 
 def cmd_search(args):
@@ -37,6 +52,8 @@ def main():
     p_search.add_argument("--limit", type=int, default=50)
     p_search.add_argument("--since", type=int, default=None, metavar="HOURS", help="Only jobs scraped within the last N hours")
     p_search.set_defaults(func=cmd_search)
+
+    sub.add_parser("preprocess", help="Clean stored descriptions into description_clean").set_defaults(func=cmd_preprocess)
 
     args = parser.parse_args()
     args.func(args)

@@ -33,6 +33,9 @@ def _conn():
 def init():
     with _conn() as con:
         con.execute(SCHEMA)
+        existing = {row[1] for row in con.execute("PRAGMA table_info(jobs)")}
+        if "description_clean" not in existing:
+            con.execute("ALTER TABLE jobs ADD COLUMN description_clean TEXT")
 
 
 def save_jobs(jobs: list[dict]) -> int:
@@ -64,7 +67,7 @@ def search_jobs(keyword: str = "", limit: int = 50, hours: int | None = None) ->
         conditions = []
         params: list = []
         if keyword:
-            conditions.append("(title LIKE ? OR description LIKE ?)")
+            conditions.append("(title LIKE ? OR COALESCE(description_clean, description) LIKE ?)")
             pattern = f"%{keyword}%"
             params.extend([pattern, pattern])
         if hours is not None:
