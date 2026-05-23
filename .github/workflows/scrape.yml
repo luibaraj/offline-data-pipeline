@@ -14,6 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Purge jobs older than 2 days
+        run: sqlite3 jobs.db "DELETE FROM jobs WHERE scraped_at < datetime('now', '-2 days');" || true
+
       - name: Random startup delay (0–20 min)
         run: sleep $((RANDOM % 1200))
 
