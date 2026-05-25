@@ -6,7 +6,7 @@ import config
 import scraper.scraper as scraper
 import storage.db as db
 from storage.preprocess import clean_description
-from storage.extract import extract_jd_fields
+from storage.extract import extract_jd_fields, extract_qual_meta
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -62,6 +62,33 @@ def cmd_extract(args):
     logger.info("Done: %d/%d jobs extracted", saved, len(rows))
 
 
+def cmd_extract_meta(args):
+    import json
+    db.init()
+    rows = db.get_jobs_missing_qual_meta()
+    logger.info("Extracting qual meta for %d jobs", len(rows))
+
+    results = {}
+    with ThreadPoolExecutor(max_workers=10) as pool:
+        futures = {
+            pool.submit(extract_qual_meta, json.loads(row["qualifications"])): row["id"]
+            for row in rows
+        }
+        for future in as_completed(futures):
+            job_id = futures[future]
+            try:
+                results[job_id] = future.result()
+            except Exception as e:
+                logger.warning("Qual meta extraction failed for job %s: %s", job_id, e)
+
+    saved = 0
+    for job_id, result in results.items():
+        db.update_qual_meta(job_id, result.max_yoe, result.min_education)
+        saved += 1
+
+    logger.info("Done: %d/%d jobs updated", saved, len(rows))
+
+
 def cmd_search(args):
     rows = db.search_jobs(keyword=args.keyword, limit=args.limit, hours=args.since)
     for row in rows:
@@ -84,6 +111,7 @@ def main():
 
     sub.add_parser("preprocess", help="Clean stored descriptions into description_clean").set_defaults(func=cmd_preprocess)
     sub.add_parser("extract", help="Extract qualifications and responsibilities via LLM").set_defaults(func=cmd_extract)
+    sub.add_parser("extract-meta", help="Extract min YOE and education from qualifications").set_defaults(func=cmd_extract_meta)
 
     args = parser.parse_args()
     args.func(args)

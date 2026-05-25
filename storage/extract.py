@@ -1,4 +1,5 @@
 import config
+from typing import Literal
 from pydantic import BaseModel
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
@@ -7,6 +8,11 @@ from langchain_core.prompts import ChatPromptTemplate
 class JDExtraction(BaseModel):
     qualifications: list[str]
     responsibilities: list[str]
+
+
+class QualMeta(BaseModel):
+    max_yoe: int | None
+    min_education: Literal["BS", "MS", "PhD"] | None
 
 
 _SYSTEM_PROMPT = """\
@@ -115,3 +121,58 @@ def extract_jd_fields(description_clean: str) -> JDExtraction:
     if not result.qualifications and not result.responsibilities:
         result = _chain.invoke({"description": description_clean})
     return result
+
+
+_QUAL_META_PROMPT = """\
+You are a precise information extractor. Given a list of job qualifications, extract two fields:
+- max_yoe: years of experience extracted from the qualifications. Apply in order:
+  1. If any bullet uses "x+" format (e.g., "5+ years"), return the highest x across all such bullets — ignore any bounded-range bullets.
+  2. If only bounded ranges exist, return the lower bound of the range (e.g., "2 to 5 years" → 2; "less than 2 years" → 0).
+  3. Return null if no years of experience are stated.
+- min_education: the minimum education degree required. Map to exactly one of: "BS", "MS", "PhD". Use the lowest tier mentioned. Return null if no degree is required.
+
+Degree mapping rules:
+- Bachelor's, BS, BA, B.S., undergraduate → "BS"
+- Master's, MS, MA, M.S., graduate degree → "MS"
+- PhD, Doctorate, Ph.D. → "PhD"
+- If a range is listed (e.g. "BS/MS preferred"), use the lower tier ("BS")
+
+--- EXAMPLE 1 ---
+Qualifications:
+- 5+ years as a Machine Learning Engineer, Software Engineer, or other related role
+- 1 to 3 years of experience with Python and ML frameworks
+- Experience with distributed training
+- BS/MS in Computer Science or related field
+
+Output:
+{{
+  "max_yoe": 5,
+  "min_education": "BS"
+}}
+
+--- EXAMPLE 2 ---
+Qualifications:
+- 2 to 5 years of software engineering experience
+- Familiarity with cloud platforms
+
+Output:
+{{
+  "max_yoe": 2,
+  "min_education": null
+}}
+"""
+
+_qual_meta_prompt = ChatPromptTemplate.from_messages([
+    ("system", _QUAL_META_PROMPT),
+    ("human", "Qualifications:\n{qualifications}"),
+])
+
+_qual_meta_chain = (_qual_meta_prompt | _llm.with_structured_output(QualMeta)).with_retry(
+    stop_after_attempt=3,
+    wait_exponential_jitter=True,
+)
+
+
+def extract_qual_meta(qualifications: list[str]) -> QualMeta:
+    text = "\n".join(f"- {q}" for q in qualifications)
+    return _qual_meta_chain.invoke({"qualifications": text})

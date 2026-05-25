@@ -40,6 +40,10 @@ def init():
             con.execute("ALTER TABLE jobs ADD COLUMN qualifications TEXT")
         if "responsibilities" not in existing:
             con.execute("ALTER TABLE jobs ADD COLUMN responsibilities TEXT")
+        if "max_yoe" not in existing:
+            con.execute("ALTER TABLE jobs ADD COLUMN max_yoe INTEGER")
+        if "min_education" not in existing:
+            con.execute("ALTER TABLE jobs ADD COLUMN min_education TEXT")
 
 
 def save_jobs(jobs: list[dict]) -> int:
@@ -79,6 +83,21 @@ def update_extracted_fields(job_id: str, qualifications: list[str], responsibili
         con.execute(
             "UPDATE jobs SET qualifications = ?, responsibilities = ? WHERE id = ?",
             (json.dumps(qualifications), json.dumps(responsibilities), job_id),
+        )
+
+
+def get_jobs_missing_qual_meta() -> list[sqlite3.Row]:
+    with _conn() as con:
+        return con.execute(
+            "SELECT id, qualifications FROM jobs WHERE qualifications IS NOT NULL AND max_yoe IS NULL"
+        ).fetchall()
+
+
+def update_qual_meta(job_id: str, max_yoe: int | None, min_education: str | None):
+    with _conn() as con:
+        con.execute(
+            "UPDATE jobs SET max_yoe=?, min_education=? WHERE id=?",
+            (max_yoe, min_education, job_id),
         )
 
 
