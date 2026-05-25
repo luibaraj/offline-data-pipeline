@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 import argparse
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import config
 import scraper.scraper as scraper
 import storage.db as db
 from storage.preprocess import clean_description
+from storage.extract import extract_jd_fields
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -33,6 +35,33 @@ def cmd_preprocess(args):
     logger.info("Preprocessed %d job descriptions", len(rows))
 
 
+def cmd_extract(args):
+    db.init()
+    rows = db.get_unextracted_jobs()
+    logger.info("Extracting fields for %d jobs", len(rows))
+
+    results = {}
+    with ThreadPoolExecutor(max_workers=10) as pool:
+        futures = {pool.submit(extract_jd_fields, row["description_clean"]): row["id"] for row in rows}
+        for future in as_completed(futures):
+            job_id = futures[future]
+            try:
+                result = future.result()
+                if not result.qualifications and not result.responsibilities:
+                    logger.warning("No qualifications or responsibilities extracted for job %s — skipping", job_id)
+                else:
+                    results[job_id] = result
+            except Exception as e:
+                logger.warning("Extraction failed for job %s: %s", job_id, e)
+
+    saved = 0
+    for job_id, result in results.items():
+        db.update_extracted_fields(job_id, result.qualifications, result.responsibilities)
+        saved += 1
+
+    logger.info("Done: %d/%d jobs extracted", saved, len(rows))
+
+
 def cmd_search(args):
     rows = db.search_jobs(keyword=args.keyword, limit=args.limit, hours=args.since)
     for row in rows:
@@ -54,6 +83,7 @@ def main():
     p_search.set_defaults(func=cmd_search)
 
     sub.add_parser("preprocess", help="Clean stored descriptions into description_clean").set_defaults(func=cmd_preprocess)
+    sub.add_parser("extract", help="Extract qualifications and responsibilities via LLM").set_defaults(func=cmd_extract)
 
     args = parser.parse_args()
     args.func(args)

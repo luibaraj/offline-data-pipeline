@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 PROXY_URL = os.environ.get("WEBSHARE_PROXY_URL")
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 USER_AGENTS = [
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",

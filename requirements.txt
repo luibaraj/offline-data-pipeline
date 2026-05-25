@@ -1,2 +1,4 @@
 python-jobspy
 python-dotenv
+langchain
+langchain-openai

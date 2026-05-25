@@ -32,6 +32,14 @@ jobs:
           WEBSHARE_PROXY_URL: ${{ secrets.WEBSHARE_PROXY_URL }}
         run: python main.py scrape
 
+      - name: Preprocess job descriptions
+        run: python main.py preprocess
+
+      - name: Extract qualifications and responsibilities
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: python main.py extract
+
       - name: Commit updated jobs.db
         run: |
           git config user.name "github-actions[bot]"

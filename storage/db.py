@@ -36,6 +36,10 @@ def init():
         existing = {row[1] for row in con.execute("PRAGMA table_info(jobs)")}
         if "description_clean" not in existing:
             con.execute("ALTER TABLE jobs ADD COLUMN description_clean TEXT")
+        if "qualifications" not in existing:
+            con.execute("ALTER TABLE jobs ADD COLUMN qualifications TEXT")
+        if "responsibilities" not in existing:
+            con.execute("ALTER TABLE jobs ADD COLUMN responsibilities TEXT")
 
 
 def save_jobs(jobs: list[dict]) -> int:
@@ -60,6 +64,22 @@ def save_jobs(jobs: list[dict]) -> int:
             except Exception as e:
                 logger.error("Failed to save job %s: %s", job.get("job_url"), e)
     return inserted
+
+
+def get_unextracted_jobs() -> list[sqlite3.Row]:
+    with _conn() as con:
+        return con.execute(
+            "SELECT id, description_clean FROM jobs WHERE description_clean IS NOT NULL AND qualifications IS NULL"
+        ).fetchall()
+
+
+def update_extracted_fields(job_id: str, qualifications: list[str], responsibilities: list[str]):
+    import json
+    with _conn() as con:
+        con.execute(
+            "UPDATE jobs SET qualifications = ?, responsibilities = ? WHERE id = ?",
+            (json.dumps(qualifications), json.dumps(responsibilities), job_id),
+        )
 
 
 def search_jobs(keyword: str = "", limit: int = 50, hours: int | None = None) -> list[sqlite3.Row]:
