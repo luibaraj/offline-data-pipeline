@@ -89,6 +89,40 @@ def cmd_extract_meta(args):
     logger.info("Done: %d/%d jobs updated", saved, len(rows))
 
 
+def cmd_embed(args):
+    import json
+    from storage.embed import embed_texts
+    api_key = config.VOYAGE_API_KEY
+    db.init()
+    rows = db.get_jobs_missing_embedding()
+    logger.info("Embedding %d jobs", len(rows))
+    if not rows:
+        return
+
+    ids = []
+    texts = []
+    for row in rows:
+        quals = json.loads(row["qualifications"] or "[]")
+        resps = json.loads(row["responsibilities"] or "[]")
+        parts = []
+        if resps:
+            parts.append("Responsibilities:\n" + "\n".join(resps))
+        if quals:
+            parts.append("Qualifications:\n" + "\n".join(quals))
+        if not parts:
+            logger.warning("Job %s has empty qualifications and responsibilities — skipping", row["id"])
+            continue
+        ids.append(row["id"])
+        texts.append("\n\n".join(parts))
+
+    embedding_bytes_list = embed_texts(texts, api_key)
+
+    for job_id, emb_bytes in zip(ids, embedding_bytes_list):
+        db.update_jd_embedding(job_id, emb_bytes)
+
+    logger.info("Done: embedded %d jobs", len(ids))
+
+
 def cmd_search(args):
     rows = db.search_jobs(keyword=args.keyword, limit=args.limit, hours=args.since)
     for row in rows:
@@ -112,6 +146,7 @@ def main():
     sub.add_parser("preprocess", help="Clean stored descriptions into description_clean").set_defaults(func=cmd_preprocess)
     sub.add_parser("extract", help="Extract qualifications and responsibilities via LLM").set_defaults(func=cmd_extract)
     sub.add_parser("extract-meta", help="Extract min YOE and education from qualifications").set_defaults(func=cmd_extract_meta)
+    sub.add_parser("embed", help="Generate JD embeddings via Voyage AI").set_defaults(func=cmd_embed)
 
     args = parser.parse_args()
     args.func(args)

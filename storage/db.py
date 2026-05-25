@@ -44,6 +44,8 @@ def init():
             con.execute("ALTER TABLE jobs ADD COLUMN max_yoe INTEGER")
         if "min_education" not in existing:
             con.execute("ALTER TABLE jobs ADD COLUMN min_education TEXT")
+        if "jd_embedding" not in existing:
+            con.execute("ALTER TABLE jobs ADD COLUMN jd_embedding BLOB")
 
 
 def save_jobs(jobs: list[dict]) -> int:
@@ -91,6 +93,19 @@ def get_jobs_missing_qual_meta() -> list[sqlite3.Row]:
         return con.execute(
             "SELECT id, qualifications FROM jobs WHERE qualifications IS NOT NULL AND max_yoe IS NULL"
         ).fetchall()
+
+
+def get_jobs_missing_embedding() -> list[sqlite3.Row]:
+    with _conn() as con:
+        return con.execute(
+            "SELECT id, responsibilities, qualifications FROM jobs "
+            "WHERE (qualifications IS NOT NULL OR responsibilities IS NOT NULL) AND jd_embedding IS NULL"
+        ).fetchall()
+
+
+def update_jd_embedding(job_id: str, embedding_bytes: bytes):
+    with _conn() as con:
+        con.execute("UPDATE jobs SET jd_embedding = ? WHERE id = ?", (embedding_bytes, job_id))
 
 
 def update_qual_meta(job_id: str, max_yoe: int | None, min_education: str | None):
