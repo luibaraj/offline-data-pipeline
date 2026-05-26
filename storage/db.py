@@ -95,6 +95,15 @@ def get_jobs_missing_qual_meta() -> list[sqlite3.Row]:
         ).fetchall()
 
 
+def get_jobs_for_indexing() -> list[sqlite3.Row]:
+    with _conn() as con:
+        return con.execute(
+            "SELECT id, title, company, job_url, max_yoe, min_education, "
+            "responsibilities, qualifications, jd_embedding, scraped_at "
+            "FROM jobs WHERE jd_embedding IS NOT NULL"
+        ).fetchall()
+
+
 def get_jobs_missing_embedding() -> list[sqlite3.Row]:
     with _conn() as con:
         return con.execute(

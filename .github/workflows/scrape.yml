@@ -50,10 +50,13 @@ jobs:
           VOYAGE_API_KEY: ${{ secrets.VOYAGE_API_KEY }}
         run: python main.py embed
 
-      - name: Commit updated jobs.db
+      - name: Build ChromaDB vector index
+        run: python main.py index
+
+      - name: Commit updated jobs.db and chroma_index
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add jobs.db
+          git add jobs.db chroma_index/
           git diff --cached --quiet || git commit -m "chore: update jobs.db [skip ci]"
           git push

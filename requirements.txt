@@ -2,4 +2,8 @@ python-jobspy
 python-dotenv
 langchain
 langchain-openai
+langchain-chroma
+langchain-voyageai
+voyageai
+chromadb
 numpy

@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 PROXY_URL = os.environ.get("WEBSHARE_PROXY_URL")
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 VOYAGE_API_KEY = os.environ.get("VOYAGE_API_KEY")
@@ -18,13 +19,30 @@ USER_AGENTS = [
 ]
 
 DB_PATH = os.environ.get("DB_PATH", "jobs.db")
+CHROMA_PATH = os.environ.get("CHROMA_PATH", "chroma_index")
 
 JITTER_MIN = 2.5
 JITTER_MAX = 8.0
 RESULTS_PER_SEARCH = 25
 RESULTS_PER_TERM = 38
 
-SEARCH_TERMS = [
-    "Machine Learning Engineer",
-    "Data Scientist",
-]
+SEARCH_TERM_POOLS = {
+    "mle": [
+        "Machine Learning Engineer",
+        "ML Engineer",
+        "ML/AI Engineer",
+        "ML/AI Forward Deployed Engineer",
+        "AI Engineer",
+"Deep Learning Engineer",
+"NLP Engineer",
+    ],
+    "data_scientist": [
+        "Data Scientist",
+        "Customer Data Scientist",
+        "Research Engineer",
+"Applied Scientist",
+"Machine Learning Scientist"
+"Data Science Engineer",
+        "Data Analyst",
+    ],
+}

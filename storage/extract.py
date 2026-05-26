@@ -1,8 +1,11 @@
+import warnings
 import config
 from typing import Literal
 from pydantic import BaseModel
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
+
+warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 
 
 class JDExtraction(BaseModel):

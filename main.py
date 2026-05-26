@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+import os
+import logging
+os.environ["ANONYMIZED_TELEMETRY"] = "false"
+logging.getLogger("chromadb.telemetry.product.posthog").setLevel(logging.CRITICAL)
 import argparse
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -15,8 +19,15 @@ logger = logging.getLogger(__name__)
 def cmd_scrape(args):
     db.init()
     all_jobs = []
-    for term in config.SEARCH_TERMS:
-        all_jobs.extend(scraper.scrape_paginated(term, args.location, config.RESULTS_PER_TERM))
+    for pool_name, terms in config.SEARCH_TERM_POOLS.items():
+        pool_jobs = []
+        for term in terms:
+            if len(pool_jobs) >= config.RESULTS_PER_TERM:
+                break
+            remaining = config.RESULTS_PER_TERM - len(pool_jobs)
+            pool_jobs.extend(scraper.scrape_paginated(term, args.location, remaining))
+        logger.info("Pool '%s': %d jobs scraped", pool_name, len(pool_jobs))
+        all_jobs.extend(pool_jobs)
     saved = db.save_jobs(all_jobs)
     logger.info("Done: %d new jobs saved (of %d scraped)", saved, len(all_jobs))
 
@@ -123,6 +134,14 @@ def cmd_embed(args):
     logger.info("Done: embedded %d jobs", len(ids))
 
 
+def cmd_index(args):
+    from storage.index import build_index, prune_stale
+    db.init()
+    indexed = build_index()
+    pruned = prune_stale(max_age_hours=24)
+    logger.info("Done: %d vectors indexed, %d stale vectors pruned", indexed, pruned)
+
+
 def cmd_search(args):
     rows = db.search_jobs(keyword=args.keyword, limit=args.limit, hours=args.since)
     for row in rows:
@@ -147,6 +166,7 @@ def main():
     sub.add_parser("extract", help="Extract qualifications and responsibilities via LLM").set_defaults(func=cmd_extract)
     sub.add_parser("extract-meta", help="Extract min YOE and education from qualifications").set_defaults(func=cmd_extract_meta)
     sub.add_parser("embed", help="Generate JD embeddings via Voyage AI").set_defaults(func=cmd_embed)
+    sub.add_parser("index", help="Build ChromaDB vector index from stored embeddings").set_defaults(func=cmd_index)
 
     args = parser.parse_args()
     args.func(args)
