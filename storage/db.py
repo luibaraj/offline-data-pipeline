@@ -1,3 +1,4 @@
+import hashlib
 import sqlite3
 import logging
 from contextlib import contextmanager
@@ -46,6 +47,22 @@ def init():
             con.execute("ALTER TABLE jobs ADD COLUMN min_education TEXT")
         if "jd_embedding" not in existing:
             con.execute("ALTER TABLE jobs ADD COLUMN jd_embedding BLOB")
+        if "description_hash" not in existing:
+            con.execute("ALTER TABLE jobs ADD COLUMN description_hash TEXT")
+            con.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS idx_jobs_desc_hash "
+                "ON jobs(description_hash) WHERE description_hash IS NOT NULL"
+            )
+        _backfill_description_hashes(con)
+
+
+def _backfill_description_hashes(con):
+    rows = con.execute(
+        "SELECT id, description FROM jobs WHERE description_hash IS NULL AND description IS NOT NULL"
+    ).fetchall()
+    for row in rows:
+        h = hashlib.md5(row["description"].encode()).hexdigest()
+        con.execute("UPDATE jobs SET description_hash = ? WHERE id = ?", (h, row["id"]))
 
 
 def save_jobs(jobs: list[dict]) -> int:
@@ -53,9 +70,12 @@ def save_jobs(jobs: list[dict]) -> int:
     with _conn() as con:
         for job in jobs:
             try:
+                desc = job.get("description") or ""
+                desc_hash = hashlib.md5(desc.encode()).hexdigest() if desc else None
                 con.execute(
-                    """INSERT OR IGNORE INTO jobs (id, title, company, location, job_url, description, date_posted)
-                       VALUES (:id, :title, :company, :location, :job_url, :description, :date_posted)""",
+                    """INSERT OR IGNORE INTO jobs
+                       (id, title, company, location, job_url, description, date_posted, description_hash)
+                       VALUES (:id, :title, :company, :location, :job_url, :description, :date_posted, :description_hash)""",
                     {
                         "id": job.get("id") or job.get("job_url"),
                         "title": job.get("title"),
@@ -64,6 +84,7 @@ def save_jobs(jobs: list[dict]) -> int:
                         "job_url": job.get("job_url"),
                         "description": job.get("description"),
                         "date_posted": str(job.get("date_posted", "")),
+                        "description_hash": desc_hash,
                     },
                 )
                 inserted += con.execute("SELECT changes()").fetchone()[0]
@@ -91,7 +112,7 @@ def update_extracted_fields(job_id: str, qualifications: list[str], responsibili
 def get_jobs_missing_qual_meta() -> list[sqlite3.Row]:
     with _conn() as con:
         return con.execute(
-            "SELECT id, qualifications FROM jobs WHERE qualifications IS NOT NULL AND max_yoe IS NULL"
+            "SELECT id, title, qualifications FROM jobs WHERE qualifications IS NOT NULL AND max_yoe IS NULL"
         ).fetchall()
 
 

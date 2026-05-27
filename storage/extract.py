@@ -1,3 +1,4 @@
+import re
 import warnings
 import config
 from typing import Literal
@@ -175,7 +176,12 @@ _qual_meta_chain = (_qual_meta_prompt | _llm.with_structured_output(QualMeta)).w
     wait_exponential_jitter=True,
 )
 
+_SENIOR_RE = re.compile(r"\b(senior|sr\.?|staff|lead|founder)\b", re.IGNORECASE)
 
-def extract_qual_meta(qualifications: list[str]) -> QualMeta:
+
+def extract_qual_meta(qualifications: list[str], title: str = "") -> QualMeta:
     text = "\n".join(f"- {q}" for q in qualifications)
-    return _qual_meta_chain.invoke({"qualifications": text})
+    result = _qual_meta_chain.invoke({"qualifications": text})
+    if result.max_yoe is None and title and _SENIOR_RE.search(title):
+        result = QualMeta(max_yoe=5, min_education=result.min_education)
+    return result

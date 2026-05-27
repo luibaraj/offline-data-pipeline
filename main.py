@@ -82,7 +82,7 @@ def cmd_extract_meta(args):
     results = {}
     with ThreadPoolExecutor(max_workers=10) as pool:
         futures = {
-            pool.submit(extract_qual_meta, json.loads(row["qualifications"])): row["id"]
+            pool.submit(extract_qual_meta, json.loads(row["qualifications"]), row["title"] or ""): row["id"]
             for row in rows
         }
         for future in as_completed(futures):

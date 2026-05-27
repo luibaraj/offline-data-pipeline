@@ -17,14 +17,17 @@ def test_init_idempotent():
     expected = [
         "id", "title", "company", "location", "job_url", "description",
         "date_posted", "scraped_at", "description_clean", "qualifications",
-        "responsibilities", "max_yoe", "min_education", "jd_embedding",
+        "responsibilities", "max_yoe", "min_education", "jd_embedding", "description_hash",
     ]
     for col in expected:
         assert cols.count(col) == 1, f"column '{col}' appears {cols.count(col)} times"
 
 
 def test_save_jobs_returns_inserted_count():
-    jobs = [make_job(id="a", job_url="http://x/a"), make_job(id="b", job_url="http://x/b")]
+    jobs = [
+        make_job(id="a", job_url="http://x/a", description="desc a"),
+        make_job(id="b", job_url="http://x/b", description="desc b"),
+    ]
     assert db.save_jobs(jobs) == 2
 
 
@@ -146,9 +149,9 @@ def test_search_jobs_keyword_description_clean():
 
 def test_search_jobs_no_filter_returns_all():
     db.save_jobs([
-        make_job(id="a", job_url="http://x/a"),
-        make_job(id="b", job_url="http://x/b"),
-        make_job(id="c", job_url="http://x/c"),
+        make_job(id="a", job_url="http://x/a", description="desc a"),
+        make_job(id="b", job_url="http://x/b", description="desc b"),
+        make_job(id="c", job_url="http://x/c", description="desc c"),
     ])
     assert len(db.search_jobs()) == 3
 
@@ -158,3 +161,21 @@ def test_search_jobs_hours_filter_excludes_old():
     with db._conn() as con:
         con.execute("UPDATE jobs SET scraped_at = datetime('now', '-2 hours') WHERE id = 'job1'")
     assert db.search_jobs(hours=1) == []
+
+
+def test_save_jobs_dedup_same_description():
+    j1 = make_job(id="job1", job_url="http://x/1", description="identical desc")
+    j2 = make_job(id="job2", job_url="http://x/2", description="identical desc")
+    assert db.save_jobs([j1, j2]) == 1
+
+
+def test_save_jobs_different_descriptions_both_saved():
+    j1 = make_job(id="job1", job_url="http://x/1", description="desc A")
+    j2 = make_job(id="job2", job_url="http://x/2", description="desc B")
+    assert db.save_jobs([j1, j2]) == 2
+
+
+def test_save_jobs_null_description_not_blocked():
+    j1 = make_job(id="job1", job_url="http://x/1", description=None)
+    j2 = make_job(id="job2", job_url="http://x/2", description=None)
+    assert db.save_jobs([j1, j2]) == 2

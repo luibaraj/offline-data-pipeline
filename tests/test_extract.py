@@ -60,3 +60,34 @@ def test_extract_qual_meta_returns_result(mocker):
     result = extract_qual_meta(["3+ years experience"])
 
     assert result == expected
+
+
+def test_extract_qual_meta_senior_title_sets_yoe_fallback(mocker):
+    mock_qual_chain = mocker.MagicMock()
+    mock_qual_chain.invoke.return_value = QualMeta(max_yoe=None, min_education="BS")
+    mocker.patch("storage.extract._qual_meta_chain", mock_qual_chain)
+
+    result = extract_qual_meta(["Strong Python skills"], title="Senior ML Engineer")
+
+    assert result.max_yoe == 5
+    assert result.min_education == "BS"
+
+
+def test_extract_qual_meta_no_fallback_when_yoe_already_set(mocker):
+    mock_qual_chain = mocker.MagicMock()
+    mock_qual_chain.invoke.return_value = QualMeta(max_yoe=3, min_education=None)
+    mocker.patch("storage.extract._qual_meta_chain", mock_qual_chain)
+
+    result = extract_qual_meta(["3+ years experience"], title="Senior ML Engineer")
+
+    assert result.max_yoe == 3
+
+
+def test_extract_qual_meta_no_fallback_when_title_not_senior(mocker):
+    mock_qual_chain = mocker.MagicMock()
+    mock_qual_chain.invoke.return_value = QualMeta(max_yoe=None, min_education=None)
+    mocker.patch("storage.extract._qual_meta_chain", mock_qual_chain)
+
+    result = extract_qual_meta(["Strong Python skills"], title="ML Engineer")
+
+    assert result.max_yoe is None
