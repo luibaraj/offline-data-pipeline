@@ -100,6 +100,7 @@ No test suite. Manual verification: run `python main.py search` after a scrape r
 **Text Cleaning — Implemented:** `clean_description()` in `storage/preprocess.py` normalizes raw descriptions; `main.py preprocess` populates `description_clean` column. Known gaps: EEO boilerplate (~37% of rows), embedded URLs, metadata leakage in embeddings, structured label artifacts from bold headers.
 
 **Remaining work** (documented in `Domain-Context/data-pipeline-checklist.md`):
+
 - Metadata extraction: degree parsing, seniority binning, experience year extraction
 - Dense embedding generation (1024-dim, batched at 128)
 - HNSW vector index with cosine distance
