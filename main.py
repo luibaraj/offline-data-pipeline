@@ -77,7 +77,7 @@ def cmd_extract(args):
 
 def cmd_extract_meta(args):
     import json
-    from storage.extract import extract_qual_meta
+    from storage.extract import extract_qual_meta, is_internship_title
     db.init()
     rows = db.get_jobs_missing_qual_meta()
     logger.info("Extracting qual meta for %d jobs", len(rows))
@@ -85,19 +85,20 @@ def cmd_extract_meta(args):
     results = {}
     with ThreadPoolExecutor(max_workers=10) as pool:
         futures = {
-            pool.submit(extract_qual_meta, json.loads(row["qualifications"]), row["title"] or ""): row["id"]
+            pool.submit(extract_qual_meta, json.loads(row["qualifications"]), row["title"] or ""): (row["id"], row["title"] or "")
             for row in rows
         }
         for future in as_completed(futures):
-            job_id = futures[future]
+            job_id, title = futures[future]
             try:
-                results[job_id] = future.result()
+                results[job_id] = (future.result(), title)
             except Exception as e:
                 logger.warning("Qual meta extraction failed for job %s: %s", job_id, e)
 
     saved = 0
-    for job_id, result in results.items():
+    for job_id, (result, title) in results.items():
         db.update_qual_meta(job_id, result.max_yoe, result.min_education)
+        db.update_is_internship(job_id, is_internship_title(title))
         saved += 1
 
     logger.info("Done: %d/%d jobs updated", saved, len(rows))

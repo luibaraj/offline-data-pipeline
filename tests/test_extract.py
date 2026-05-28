@@ -1,5 +1,5 @@
 import pytest
-from storage.extract import JDExtraction, QualMeta, extract_jd_fields, extract_qual_meta
+from storage.extract import JDExtraction, QualMeta, extract_jd_fields, extract_qual_meta, is_internship_title
 
 
 def test_extract_jd_fields_returns_result(mocker):
@@ -91,3 +91,18 @@ def test_extract_qual_meta_no_fallback_when_title_not_senior(mocker):
     result = extract_qual_meta(["Strong Python skills"], title="ML Engineer")
 
     assert result.max_yoe is None
+
+
+@pytest.mark.parametrize("title,expected", [
+    ("Software Intern", True),
+    ("Software Engineering Internship", True),
+    ("Data Science Co-op", True),
+    ("Co Op Engineer", True),
+    ("Coop Position", True),
+    ("ML Intern 2025", True),
+    ("Senior ML Engineer", False),
+    ("Internal Tools Engineer", False),
+    ("Program Coordinator", False),
+])
+def test_is_internship_title(title, expected):
+    assert is_internship_title(title) == expected

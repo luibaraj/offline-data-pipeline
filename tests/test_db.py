@@ -18,6 +18,7 @@ def test_init_idempotent():
         "id", "title", "company", "location", "job_url", "description",
         "date_posted", "scraped_at", "description_clean", "qualifications",
         "responsibilities", "max_yoe", "min_education", "jd_embedding", "description_hash",
+        "is_internship",
     ]
     for col in expected:
         assert cols.count(col) == 1, f"column '{col}' appears {cols.count(col)} times"
@@ -113,6 +114,7 @@ def test_get_jobs_missing_qual_meta_excluded_after_update():
     db.save_jobs([make_job()])
     db.update_extracted_fields("job1", ["Python"], ["Build"])
     db.update_qual_meta("job1", 5, "MS")
+    db.update_is_internship("job1", False)
     assert db.get_jobs_missing_qual_meta() == []
 
 
@@ -179,3 +181,25 @@ def test_save_jobs_null_description_not_blocked():
     j1 = make_job(id="job1", job_url="http://x/1", description=None)
     j2 = make_job(id="job2", job_url="http://x/2", description=None)
     assert db.save_jobs([j1, j2]) == 2
+
+
+def test_update_is_internship_roundtrip():
+    db.save_jobs([make_job()])
+    db.update_is_internship("job1", True)
+    with db._conn() as con:
+        row = con.execute("SELECT is_internship FROM jobs WHERE id = 'job1'").fetchone()
+    assert row["is_internship"] == 1
+
+    db.update_is_internship("job1", False)
+    with db._conn() as con:
+        row = con.execute("SELECT is_internship FROM jobs WHERE id = 'job1'").fetchone()
+    assert row["is_internship"] == 0
+
+
+def test_get_jobs_missing_qual_meta_backfills_is_internship():
+    db.save_jobs([make_job()])
+    db.update_extracted_fields("job1", ["Python"], ["Build"])
+    db.update_qual_meta("job1", 5, "MS")
+    rows = db.get_jobs_missing_qual_meta()
+    assert len(rows) == 1
+    assert rows[0]["id"] == "job1"

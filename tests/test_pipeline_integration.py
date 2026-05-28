@@ -39,6 +39,7 @@ def test_extract_to_qual_meta_handoff():
     assert len(db.get_jobs_missing_qual_meta()) == 1
 
     db.update_qual_meta("job1", 5, "MS")
+    db.update_is_internship("job1", False)
     assert db.get_jobs_missing_qual_meta() == []
 
 

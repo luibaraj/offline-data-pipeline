@@ -177,6 +177,11 @@ _qual_meta_chain = (_qual_meta_prompt | _llm.with_structured_output(QualMeta)).w
 )
 
 _SENIOR_RE = re.compile(r"\b(senior|sr\.?|staff|lead|founder)\b", re.IGNORECASE)
+_INTERNSHIP_RE = re.compile(r"\b(intern(ship)?|co[\s-]?op)\b", re.IGNORECASE)
+
+
+def is_internship_title(title: str) -> bool:
+    return bool(_INTERNSHIP_RE.search(title))
 
 
 def extract_qual_meta(qualifications: list[str], title: str = "") -> QualMeta:
