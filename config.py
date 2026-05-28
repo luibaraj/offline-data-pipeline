@@ -28,16 +28,23 @@ RESULTS_PER_TERM = 38
 
 SEARCH_TERM_POOLS = {
     "mle": [
-        "Machine Learning Engineer",
+        "Junior Machine Learning Engineer",
+        "Entry Level Machine Learning Engineer",
+        "Machine Learning Engineer, New Grad",
+        "Machine Learning Engineer"
         "ML Engineer",
-        "Research Engineer",
-        "Deep Learning Engineer",
         "ML/AI Engineer",
         "AI Engineer",
-        "NLP Engineer",
         "ML/AI Forward Deployed Engineer",
+        "Research Engineer",
+        "Deep Learning Engineer",
+        "NLP Engineer",
+        
     ],
     "data_scientist": [
+        "Junior Data Scientist",
+        "Entry Level Data Scientist",
+        "Data Scientist, New Grad",
         "Data Scientist",
         "Customer Data Scientist",
         "Product Data Scientist",
