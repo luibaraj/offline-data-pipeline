@@ -30,19 +30,21 @@ SEARCH_TERM_POOLS = {
     "mle": [
         "Machine Learning Engineer",
         "ML Engineer",
+        "Research Engineer",
+        "Deep Learning Engineer",
         "ML/AI Engineer",
-        "ML/AI Forward Deployed Engineer",
         "AI Engineer",
-"Deep Learning Engineer",
-"NLP Engineer",
+        "NLP Engineer",
+        "ML/AI Forward Deployed Engineer",
     ],
     "data_scientist": [
         "Data Scientist",
         "Customer Data Scientist",
-        "Research Engineer",
+        "Product Data Scientist",
+        "Data Science Engineer",
 "Applied Scientist",
-"Machine Learning Scientist"
-"Data Science Engineer",
+"Research Scientist",
+"Machine Learning Scientist",
         "Data Analyst",
     ],
 }
