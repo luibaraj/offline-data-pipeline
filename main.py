@@ -10,7 +10,6 @@ import config
 import scraper.scraper as scraper
 import storage.db as db
 from storage.preprocess import clean_description
-from storage.extract import extract_jd_fields, extract_qual_meta
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -47,6 +46,7 @@ def cmd_preprocess(args):
 
 
 def cmd_extract(args):
+    from storage.extract import extract_jd_fields
     db.init()
     rows = db.get_unextracted_jobs()
     logger.info("Extracting fields for %d jobs", len(rows))
@@ -75,6 +75,7 @@ def cmd_extract(args):
 
 def cmd_extract_meta(args):
     import json
+    from storage.extract import extract_qual_meta
     db.init()
     rows = db.get_jobs_missing_qual_meta()
     logger.info("Extracting qual meta for %d jobs", len(rows))

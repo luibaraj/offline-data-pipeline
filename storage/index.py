@@ -21,7 +21,7 @@ def _get_collection():
         collection_metadata={
             "hnsw:space": "cosine",
             "hnsw:construction_ef": 200,
-            "hnsw:ef_search": 400,
+            "hnsw:search_ef": 400,
         },
     )
     return store._collection
