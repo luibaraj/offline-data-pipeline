@@ -46,6 +46,7 @@ SEARCH_TERM_POOLS = {
         "Entry Level Data Scientist",
         "Data Scientist, New Grad",
         "Data Scientist",
+        "Research Data Scientist",
         "Customer Data Scientist",
         "Product Data Scientist",
         "Data Science Engineer",
