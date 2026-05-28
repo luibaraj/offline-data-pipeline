@@ -45,6 +45,7 @@ def build_index() -> int:
             "min_education": row["min_education"] or "",
             "responsibilities": json.dumps(json.loads(row["responsibilities"] or "[]")),
             "qualifications": json.dumps(json.loads(row["qualifications"] or "[]")),
+            "is_internship": row["is_internship"] if row["is_internship"] is not None else -1,
         })
 
     _get_collection().upsert(ids=ids, embeddings=embeddings, metadatas=metadatas)

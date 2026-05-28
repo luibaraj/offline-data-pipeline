@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Coding Principles
 
-**Philosophy: Do the simplest thing that works.**
+**Philosophy 1: Do the simplest thing that works.**
+
+**Philosophy 2: Make zero assumptions or decisions about system design and implementaiton at any level of the project. Ask the user for clarifiaciton and context.**
 
 ### Simplicity & Conciseness
 

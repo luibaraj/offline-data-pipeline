@@ -123,7 +123,7 @@ def get_jobs_for_indexing() -> list[sqlite3.Row]:
     with _conn() as con:
         return con.execute(
             "SELECT id, title, company, job_url, max_yoe, min_education, "
-            "responsibilities, qualifications, jd_embedding, scraped_at "
+            "responsibilities, qualifications, jd_embedding, scraped_at, is_internship "
             "FROM jobs WHERE jd_embedding IS NOT NULL"
         ).fetchall()
 
