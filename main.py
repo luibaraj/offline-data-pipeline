@@ -17,18 +17,20 @@ logger = logging.getLogger(__name__)
 
 def cmd_scrape(args):
     db.init()
-    all_jobs = []
+    total_saved = 0
     for pool_name, terms in config.SEARCH_TERM_POOLS.items():
-        pool_jobs = []
+        saved_for_pool = 0
         for term in terms:
-            if len(pool_jobs) >= config.RESULTS_PER_TERM:
+            if saved_for_pool >= config.RESULTS_PER_TERM:
                 break
-            remaining = config.RESULTS_PER_TERM - len(pool_jobs)
-            pool_jobs.extend(scraper.scrape_paginated(term, args.location, remaining))
-        logger.info("Pool '%s': %d jobs scraped", pool_name, len(pool_jobs))
-        all_jobs.extend(pool_jobs)
-    saved = db.save_jobs(all_jobs)
-    logger.info("Done: %d new jobs saved (of %d scraped)", saved, len(all_jobs))
+            remaining = config.RESULTS_PER_TERM - saved_for_pool
+            jobs = scraper.scrape_paginated(term, args.location, remaining)
+            saved = db.save_jobs(jobs)
+            saved_for_pool += saved
+            logger.info("Pool '%s' term '%s': %d new saved (pool total: %d)", pool_name, term, saved, saved_for_pool)
+        logger.info("Pool '%s': %d unique jobs saved", pool_name, saved_for_pool)
+        total_saved += saved_for_pool
+    logger.info("Done: %d total new jobs saved", total_saved)
 
 
 def cmd_preprocess(args):
