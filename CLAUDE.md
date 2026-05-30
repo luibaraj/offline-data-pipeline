@@ -8,6 +8,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Philosophy 2: Make zero assumptions or decisions about system design and implementaiton at any level of the project. Ask the user for clarifiaciton and context.**
 
+**Philosophy 3: Be token efficient.**
+
 ### Simplicity & Conciseness
 
 - Write the minimum code needed to solve the problem correctly — no more

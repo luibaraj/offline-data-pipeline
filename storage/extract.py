@@ -178,6 +178,8 @@ _qual_meta_chain = (_qual_meta_prompt | _llm.with_structured_output(QualMeta)).w
 
 _SENIOR_RE = re.compile(r"\b(senior|sr\.?|staff|lead|founder)\b", re.IGNORECASE)
 _INTERNSHIP_RE = re.compile(r"\b(intern(ship)?|co[\s-]?op)\b", re.IGNORECASE)
+_LEVEL_RE = re.compile(r"\b(IV|III|II|I|[1-4])\b")
+_LEVEL_YOE = {"I": 0, "1": 0, "II": 3, "2": 3, "III": 5, "3": 5, "IV": 8, "4": 8}
 
 
 def is_internship_title(title: str) -> bool:
@@ -187,6 +189,10 @@ def is_internship_title(title: str) -> bool:
 def extract_qual_meta(qualifications: list[str], title: str = "") -> QualMeta:
     text = "\n".join(f"- {q}" for q in qualifications)
     result = _qual_meta_chain.invoke({"qualifications": text})
-    if result.max_yoe is None and title and _SENIOR_RE.search(title):
-        result = QualMeta(max_yoe=5, min_education=result.min_education)
+    if result.max_yoe is None and title:
+        m = _LEVEL_RE.search(title)
+        if m:
+            result = QualMeta(max_yoe=_LEVEL_YOE[m.group(1)], min_education=result.min_education)
+        elif _SENIOR_RE.search(title):
+            result = QualMeta(max_yoe=5, min_education=result.min_education)
     return result

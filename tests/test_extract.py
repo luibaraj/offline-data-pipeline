@@ -93,6 +93,59 @@ def test_extract_qual_meta_no_fallback_when_title_not_senior(mocker):
     assert result.max_yoe is None
 
 
+# Roman numeral / number → YOE fallback tests
+
+@pytest.mark.parametrize("title,expected_yoe", [
+    ("Software Engineer II", 3),   # roman numeral II maps to mid-level (3 yoe)
+    ("Data Scientist IV", 8),      # roman numeral IV maps to staff-level (8 yoe)
+    ("ML Engineer I", 0),          # roman numeral I maps to entry-level (0 yoe)
+    ("Data Scientist 3", 5),       # arabic numeral 3 maps to senior-level (5 yoe)
+    ("ML Engineer 1", 0),          # arabic numeral 1 maps to entry-level (0 yoe)
+])
+def test_extract_qual_meta_level_numeral_sets_yoe(title, expected_yoe, mocker):
+    mock_qual_chain = mocker.MagicMock()
+    mock_qual_chain.invoke.return_value = QualMeta(max_yoe=None, min_education=None)
+    mocker.patch("storage.extract._qual_meta_chain", mock_qual_chain)
+
+    result = extract_qual_meta([], title=title)
+
+    assert result.max_yoe == expected_yoe
+
+
+def test_extract_qual_meta_level_numeral_preserves_education(mocker):
+    # level numeral fallback keeps the LLM-extracted education degree
+    mock_qual_chain = mocker.MagicMock()
+    mock_qual_chain.invoke.return_value = QualMeta(max_yoe=None, min_education="MS")
+    mocker.patch("storage.extract._qual_meta_chain", mock_qual_chain)
+
+    result = extract_qual_meta([], title="Software Engineer III")
+
+    assert result.max_yoe == 5
+    assert result.min_education == "MS"
+
+
+def test_extract_qual_meta_level_numeral_skipped_when_yoe_already_set(mocker):
+    # LLM result is not overridden when it already returned a yoe
+    mock_qual_chain = mocker.MagicMock()
+    mock_qual_chain.invoke.return_value = QualMeta(max_yoe=7, min_education=None)
+    mocker.patch("storage.extract._qual_meta_chain", mock_qual_chain)
+
+    result = extract_qual_meta([], title="Software Engineer II")
+
+    assert result.max_yoe == 7
+
+
+def test_extract_qual_meta_level_numeral_beats_senior_keyword(mocker):
+    # when title has both a level numeral and a senior keyword, the numeral wins
+    mock_qual_chain = mocker.MagicMock()
+    mock_qual_chain.invoke.return_value = QualMeta(max_yoe=None, min_education=None)
+    mocker.patch("storage.extract._qual_meta_chain", mock_qual_chain)
+
+    result = extract_qual_meta([], title="Senior Software Engineer II")
+
+    assert result.max_yoe == 3
+
+
 @pytest.mark.parametrize("title,expected", [
     ("Software Intern", True),
     ("Software Engineering Internship", True),
