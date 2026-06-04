@@ -16,6 +16,8 @@ def _check_proxy(proxy_url: str, attempts: int = 3) -> None:
             return
         except Exception as e:
             logger.warning("Proxy check failed (attempt %d/%d): %s", attempt, attempts, e)
+            if attempt < attempts:
+                time.sleep(2)
     raise RuntimeError("Proxy unreachable after 3 attempts — check Webshare credentials or endpoint")
 
 
@@ -23,18 +25,22 @@ def _scrape_batch(search_term: str, location: str, offset: int) -> list[dict]:
     user_agent = random.choice(config.USER_AGENTS)
     proxies = [config.PROXY_URL] if config.PROXY_URL else None
 
-    df = scrape_jobs(
-        site_name=["linkedin"],
-        search_term=search_term,
-        location=location,
-        results_wanted=config.RESULTS_PER_SEARCH,
-        offset=offset,
-        hours_old=6,
-        proxies=proxies,
-        linkedin_fetch_description=True,
-        headers={"User-Agent": user_agent},
-    )
-    return df.to_dict("records")
+    try:
+        df = scrape_jobs(
+            site_name=["linkedin"],
+            search_term=search_term,
+            location=location,
+            results_wanted=config.RESULTS_PER_SEARCH,
+            offset=offset,
+            hours_old=6,
+            proxies=proxies,
+            linkedin_fetch_description=True,
+            headers={"User-Agent": user_agent},
+        )
+        return df.to_dict("records")
+    except Exception as e:
+        logger.warning("Batch scrape failed (term=%s, offset=%d): %s", search_term, offset, e)
+        return []
 
 
 def scrape_paginated(search_term: str, location: str, total: int) -> list[dict]:
